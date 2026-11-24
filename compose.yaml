@@ -2,20 +2,43 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8080:80"
+      - "${APP_PORT:-8080}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: "postgresql://appuser:rescue123@db:5432/appdb"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:?Falta_POSTGRES_PASSWORD_en_.env}@db:5432/${POSTGRES_DB:-appdb}"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: rescue123
-      POSTGRES_DB: appdb
+      POSTGRES_USER: "${POSTGRES_USER:-appuser}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta_POSTGRES_PASSWORD_en_.env}"
+      POSTGRES_DB: "${POSTGRES_DB:-appdb}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
