@@ -1,234 +1,194 @@
 # ACI606 - Docker Rescue Challenge
 
-## 1. Descripción del proyecto
+## 1. Descripción
 
-Este proyecto consiste en recuperar y mejorar una aplicación web
-compuesta por tres servicios que funcionan mediante Docker Compose.
+Este repositorio contiene la recuperación de la aplicación multi-servicio entregada para la Evaluación 2 de ACI606. Se trabajó sobre el proyecto original, conservando sus tres componentes:
 
-El trabajo se realizó sobre el proyecto original entregado para la
-evaluación, conservando su arquitectura y sus componentes.
+- **Frontend:** Nginx.
+- **Backend:** FastAPI.
+- **Base de datos:** PostgreSQL.
 
-## 2. Arquitectura
+La comunicación sigue el flujo:
 
-La aplicación está compuesta por:
+`Navegador → Nginx → FastAPI → PostgreSQL`
 
-- Frontend: Nginx.
-- Backend: FastAPI con Python.
-- Base de datos: PostgreSQL.
+## 2. Requisitos
 
-Comunicación entre servicios:
-
-Frontend (Nginx) -> Backend (FastAPI) -> PostgreSQL.
-
-## 3. Requisitos
-
-Para ejecutar el proyecto se necesita:
-
-- Docker instalado.
+- Docker instalado y en ejecución.
 - Docker Compose.
 - Git.
-- Acceso a una terminal.
+- Una terminal.
 
-## 4. Configuración inicial
+## 3. Descargar y configurar
 
-Primero, clonar el repositorio:
+Clonar el repositorio:
 
-    git clone https://github.com/jhoxwe-lgtm/aci606-docker-rescue.git
+```bash
+git clone https://github.com/jhoxwe-lgtm/aci606-docker-rescue.git
+cd aci606-docker-rescue
+```
 
-Entrar en la carpeta:
+Crear el archivo local de configuración:
 
-    cd aci606-docker-rescue
+```bash
+cp .env.example .env
+```
 
-Crear el archivo de configuración:
+Editar `.env` y definir una contraseña propia para `POSTGRES_PASSWORD`. Las variables disponibles son:
 
-    cp .env.example .env
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_DB`
+- `APP_PORT`
 
-Abrir el archivo .env y configurar una contraseña propia.
+El archivo `.env` es local y está excluido de Git mediante `.gitignore`. No se debe publicar ni compartir con contraseñas reales. El archivo `.env.example` contiene únicamente valores de ejemplo.
 
-Las variables utilizadas son:
+## 4. Construir e iniciar los servicios
 
-- POSTGRES_USER
-- POSTGRES_PASSWORD
-- POSTGRES_DB
-- APP_PORT
+Desde la carpeta del proyecto, ejecutar:
 
-Importante: el archivo .env contiene información privada y no debe
-subirse al repositorio. Está protegido mediante .gitignore.
+```bash
+docker compose up --build -d
+```
 
-## 5. Iniciar la aplicación
-
-Ejecutar:
-
-    docker compose up -d --build
-
-Este comando construye las imágenes e inicia los tres servicios.
-
-## 6. Comprobar el funcionamiento
-
-Consultar el estado de los servicios:
-
-    docker compose ps
-
-Los servicios deben alcanzar el estado healthy:
-
-- frontend
-- backend
-- db
-
-Revisar los registros:
-
-    docker compose logs
-
-Comprobar la salud de la API:
-
-    curl http://localhost:8080/api/health
-
-Respuesta esperada:
-
-    {"status":"ok","database":"reachable"}
-
-La aplicación se encuentra disponible en:
-
-    http://localhost:8080
-
-En GitHub Codespaces también se puede abrir desde la pestaña
-Puertos, seleccionando el puerto 8080.
-
-## 7. Operaciones de la API
-
-Consultar los registros:
-
-    curl http://localhost:8080/api/items
-
-Crear un registro de prueba:
-
-    curl -X POST http://localhost:8080/api/items \
-      -H "Content-Type: application/json" \
-      -d '{"name":"Prueba de persistencia Docker"}'
-
-La API utiliza las siguientes rutas:
-
-- GET /api/health
-- GET /api/items
-- POST /api/items
-
-## 8. Persistencia de datos
-
-PostgreSQL utiliza un volumen nombrado:
-
-    postgres_data
-
-Este volumen conserva los datos aunque se recree el contenedor
-de la base de datos.
-
-Para comprobar la persistencia:
-
-1. Crear un registro mediante la API.
-2. Consultar los registros.
-3. Recrear el contenedor de PostgreSQL:
-
-       docker compose up -d --force-recreate db
-
-4. Esperar a que PostgreSQL esté saludable.
-5. Consultar nuevamente los registros.
-
-El registro creado debe seguir existiendo.
-
-Importante: docker compose down no elimina el volumen.
-No utilizar docker compose down -v, porque elimina los volúmenes
-y puede borrar los datos almacenados.
-
-## 9. Prueba de fallo controlado y recuperación
-
-Para simular una falla del backend:
-
-    docker compose stop backend
+Este comando construye las imágenes e inicia frontend, backend y PostgreSQL.
 
 Consultar el estado:
 
-    docker compose ps -a
+```bash
+docker compose ps
+```
 
-Comprobar la API:
+Los tres servicios deben llegar al estado `healthy`. Para revisar los registros:
 
-    curl -i http://localhost:8080/api/health
+```bash
+docker compose logs
+```
 
-Durante la prueba se obtiene una respuesta HTTP 502 Bad Gateway,
-porque Nginx no puede comunicarse con el backend detenido.
+## 5. Verificar el funcionamiento
 
-Para recuperar el servicio:
+Comprobar la salud de la API a través de Nginx:
 
-    docker compose start backend
+```bash
+curl -i http://localhost:8080/api/health
+```
 
-Comprobar nuevamente:
+Respuesta esperada:
 
-    docker compose ps
+```json
+{"status":"ok","database":"reachable"}
+```
 
-    curl http://localhost:8080/api/health
+Abrir la aplicación en:
 
-La aplicación debe volver a responder correctamente y conservar
-los registros almacenados en PostgreSQL.
+`http://localhost:8080`
 
-## 10. Incidencias identificadas y reparaciones
+En GitHub Codespaces también se puede abrir el puerto 8080 desde la pestaña **Puertos**.
 
-R-01: Se corrigió el módulo utilizado para iniciar Uvicorn.
-Se cambió app:app por main:app.
+## 6. Consultar y crear registros
 
-R-02: Se agregó la dependencia psycopg2-binary para permitir
-la conexión entre SQLAlchemy y PostgreSQL.
+Consultar los registros guardados:
 
-R-03: Se corrigió la dirección de conexión a PostgreSQL.
-Se reemplazó localhost por el nombre del servicio db.
+```bash
+curl http://localhost:8080/api/items
+```
 
-R-04: Se corrigió la contraseña utilizada por el backend para
-que coincidiera con la configuración de PostgreSQL.
+Crear un registro de prueba:
 
-R-05: Se corrigió la dirección de comunicación de Nginx.
-Se reemplazó localhost por backend.
+```bash
+curl -X POST http://localhost:8080/api/items \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Prueba de persistencia Docker"}'
+```
 
-R-06: Se corrigió la publicación del puerto del frontend.
-Se configuró 8080:80, respetando el puerto interno de Nginx.
+Rutas disponibles:
 
-R-07: Se incorporó un volumen nombrado para conservar los datos
-de PostgreSQL y se realizó una prueba de persistencia.
+- `GET /api/health`: comprueba el backend y la conexión a la base de datos.
+- `GET /api/items`: lista los registros.
+- `POST /api/items`: crea un registro.
 
-R-08: Se incorporaron comprobaciones de salud para los tres
-servicios mediante healthchecks.
+## 7. Persistencia de PostgreSQL
 
-R-09: Se realizó una prueba de fallo controlado del backend
-y posteriormente se comprobó su recuperación.
+PostgreSQL utiliza el volumen nombrado `postgres_data`, montado en `/var/lib/postgresql/data`. El volumen permite conservar los datos al recrear el contenedor de la base de datos.
 
-## 11. Evidencias
+Para comprobarlo:
 
-La carpeta evidencias contiene los registros utilizados para
-documentar los diagnósticos, las reparaciones y las pruebas.
+1. Crear un registro mediante `POST /api/items`.
+2. Consultar los registros mediante `GET /api/items`.
+3. Recrear únicamente el contenedor de PostgreSQL:
 
-Incluye evidencias de:
+   ```bash
+   docker compose up -d --force-recreate db
+   ```
 
-- Errores originales del backend.
-- Problemas de conexión con PostgreSQL.
-- Configuración y comunicación de Nginx.
-- Funcionamiento de la API.
-- Persistencia de datos.
-- Estado de salud de los servicios.
-- Fallo controlado y recuperación.
+4. Esperar a que el servicio vuelva a estar saludable:
 
-## 12. Detener la aplicación
+   ```bash
+   docker compose ps
+   ```
 
-Para detener los contenedores:
+5. Consultar nuevamente `/api/items`. El registro creado debe seguir presente.
 
-    docker compose down
+**Importante:** `docker compose down` conserva el volumen nombrado. No ejecutar `docker compose down -v` durante esta prueba, porque la opción `-v` elimina los volúmenes y puede borrar los datos.
 
-Este comando detiene y elimina los contenedores y la red,
-pero conserva el volumen nombrado de PostgreSQL.
+## 8. Fallo controlado y recuperación
 
-## 13. Resultado final
+Detener el backend:
 
-Se logró recuperar la aplicación original y corregir las
-incidencias identificadas.
+```bash
+docker compose stop backend
+docker compose ps -a
+```
 
-Se comprobó el funcionamiento de los tres servicios, la
-comunicación entre ellos, la persistencia de los datos,
-los healthchecks y la recuperación después de un fallo.
+Comprobar el efecto sobre la API:
 
-El proyecto conserva el historial de modificaciones mediante
-commits publicados en GitHub.
+```bash
+curl -i --max-time 5 http://localhost:8080/api/health
+```
+
+Durante la prueba se espera una respuesta `502 Bad Gateway`, porque Nginx no puede comunicarse con el backend detenido.
+
+Recuperar el backend:
+
+```bash
+docker compose start backend
+docker compose ps
+curl -i http://localhost:8080/api/health
+```
+
+Después de que el backend vuelva a estar saludable, la API debe responder `HTTP 200 OK` y los registros deben mantenerse.
+
+## 9. Detener y recrear toda la aplicación
+
+Para detener y eliminar los contenedores y la red, conservando el volumen de PostgreSQL:
+
+```bash
+docker compose down
+```
+
+Para construir e iniciar nuevamente los tres servicios:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+No agregar `-v` a `docker compose down` cuando se deban conservar los datos.
+
+## 10. Incidencias corregidas y mejoras
+
+- **R-01:** se corrigió el comando de inicio de Uvicorn, de `app:app` a `main:app`.
+- **R-02:** se agregó `psycopg2-binary` para permitir la conexión de SQLAlchemy con PostgreSQL.
+- **R-03:** se reemplazó `localhost` por el nombre del servicio `db` en la URL de conexión.
+- **R-04:** se corrigieron las credenciales de PostgreSQL y se externalizaron mediante variables de entorno.
+- **R-05:** se corrigió el destino del proxy Nginx para utilizar `backend:8000`.
+- **R-06:** se corrigió la publicación del puerto del frontend a `8080:80`.
+- **R-07:** se agregó el volumen persistente `postgres_data` y la configuración mediante `.env` / `.env.example`.
+- **R-08:** se agregaron healthchecks para PostgreSQL, backend y frontend.
+- **R-09:** se documentó el fallo controlado del backend y su posterior recuperación.
+
+El detalle de síntomas, evidencias, causas raíz, cambios, justificaciones, verificaciones e impactos se encuentra en [DIAGNOSTICO.md](DIAGNOSTICO.md). Las capturas de Codespaces se encuentran en `evidencias/capturas/` y las salidas de comandos en `evidencias/`.
+
+## 11. Resultado
+
+Se recuperó la aplicación original y se verificaron la comunicación entre los tres servicios, la salud de la API, la persistencia de datos tras recrear PostgreSQL y la recuperación después de detener el backend. El historial de GitHub conserva los cambios de diagnóstico, reparación, mejora y documentación.
