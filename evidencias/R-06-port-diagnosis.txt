@@ -1,0 +1,13 @@
+]633;E;echo "=== PRUEBA DE ACCESO ORIGINAL ===";817521dc-91c2-48cf-9c28-5a63775d583c]633;C=== PRUEBA DE ACCESO ORIGINAL ===
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (56) Recv failure: Connection reset by peer
+=== PUERTO NGINX ===
+2:    listen 80;
+=== PUERTO COMPOSE ===
+2:  frontend:
+3-    build: ./frontend
+4-    ports:
+5-      - "8080:8080"
+6-    depends_on:

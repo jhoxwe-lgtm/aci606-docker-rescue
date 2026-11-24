@@ -1,0 +1,32 @@
+]633;E;echo "=== NGINX ORIGINAL ===";817521dc-91c2-48cf-9c28-5a63775d583c]633;C=== NGINX ORIGINAL ===
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://localhost:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+=== DOCKERFILE ORIGINAL ===
+FROM nginx:1.27-alpine
+COPY index.html /usr/share/nginx/html/index.html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+=== COMPOSE ORIGINAL ===
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+
+  backend:
