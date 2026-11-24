@@ -1,0 +1,8 @@
+HTTP/1.1 201 Created
+Server: nginx/1.27.5
+Date: Tue, 24 Nov 2026 01:40:35 GMT
+Content-Type: application/json
+Content-Length: 89
+Connection: keep-alive
+
+{"id":1,"name":"Prueba de persistencia Docker","created_at":"2026-11-24T01:40:35.529038"}

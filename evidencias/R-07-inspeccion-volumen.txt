@@ -1,0 +1,16 @@
+[
+    {
+        "CreatedAt": "2026-11-24T01:37:16Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.compose.config-hash": "c8ac3d0a40d209058e4907d78416f827b70913d86cc3a7734e8a1862b2ab7bb8",
+            "com.docker.compose.project": "aci606-docker-rescue",
+            "com.docker.compose.version": "5.6.1",
+            "com.docker.compose.volume": "postgres_data"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/aci606-docker-rescue_postgres_data/_data",
+        "Name": "aci606-docker-rescue_postgres_data",
+        "Options": null,
+        "Scope": "local"
+    }
+]
